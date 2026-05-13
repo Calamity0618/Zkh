@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜品推荐系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #888;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .items-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            min-height: 50px;
+        }
+        
+        .items-list h3 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .item-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .item-tag .remove {
+            margin-left: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .empty-text {
+            color: #999;
+            font-size: 13px;
+            font-style: italic;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .results h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .recommendation-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .recommendation-item .name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-recommendations {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px 15px;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ 菜品推荐系统</h1>
+        <p class="subtitle">输入已点的菜品，获取推荐搭配</p>
+        
+        <div class="input-group">
+            <label for="dishInput">输入菜品名称：</label>
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="dishInput" 
+                    placeholder="例如：宫保鸡丁"
+                    autocomplete="off"
+                >
+                <button onclick="addDish()">添加</button>
+            </div>
+        </div>
+        
+        <div class="items-list">
+            <h3>已选菜品：</h3>
+            <div id="selectedItems">
+                <span class="empty-text">暂无选择</span>
+            </div>
+        </div>
+        
+        <button onclick="getRecommendations()" style="width: 100%; padding: 14px;">
+            获取推荐
+        </button>
+        
+        <div id="results" class="results" style="display: none;">
+            <h2>推荐菜品：</h2>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedDishes = [];
+
+        function addDish() {
+            const input = document.getElementById('dishInput');
+            const dish = input.value.trim();
+            
+            if (dish && !selectedDishes.includes(dish)) {
+                selectedDishes.push(dish);
+                input.value = '';
+                updateDishDisplay();
+            } else if (selectedDishes.includes(dish)) {
+                alert('该菜品已添加');
+            }
+        }
+
+        function removeDish(index) {
+            selectedDishes.splice(index, 1);
+            updateDishDisplay();
+        }
+
+        function updateDishDisplay() {
+            const container = document.getElementById('selectedItems');
+            if (selectedDishes.length === 0) {
+                container.innerHTML = '<span class="empty-text">暂无选择</span>';
+            } else {
+                container.innerHTML = selectedDishes
+                    .map((dish, index) => `
+                        <span class="item-tag">
+                            ${dish}
+                            <span class="remove" onclick="removeDish(${index})">×</span>
+                        </span>
+                    `)
+                    .join('');
+            }
+        }
+
+        function getRecommendations() {
+            if (selectedDishes.length === 0) {
+                alert('请先添加至少一个菜品');
+                return;
+            }
+
+            const resultDiv = document.getElementById('results');
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = '<div class="loading"><span class="spinner"></span>加载中...</div>';
+            resultDiv.style.display = 'block';
+
+            fetch('/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ items: selectedDishes })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const recommendations = data.recommendDations || [];
+                if (recommendations.length === 0) {
+                    resultContent.innerHTML = '<div class="no-recommendations">暂无推荐</div>';
+                } else {
+                    resultContent.innerHTML = recommendations
+                        .map(dish => `<div class="recommendation-item"><span class="name">✓ ${dish}</span></div>`)
+                        .join('');
+                }
+            })
+            .catch(error => {
+                resultContent.innerHTML = '<div class="no-recommendations">获取推荐失败，请重试</div>';
+                console.error('Error:', error);
+            });
+        }
+
+        // 回车键提交
+        document.getElementById('dishInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addDish();
+            }
+        });
+    </script>
+</body>
+</html>
