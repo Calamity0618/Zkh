@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ topic.name }} - 主题详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 25px 0; text-align: center;
+        }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { font-size: 14px; opacity: 0.85; }
+        
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        
+        .back-link {
+            display: inline-block; margin: 15px 0; color: #667eea;
+            text-decoration: none; font-size: 14px; font-weight: bold;
+        }
+        .back-link:hover { text-decoration: underline; }
+        
+        /* 主题信息卡片 */
+        .topic-info {
+            background: white; border-radius: 12px; padding: 30px;
+            margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .topic-title {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+        }
+        .topic-title h2 { font-size: 24px; }
+        .topic-tag {
+            display: inline-block; padding: 6px 18px; border-radius: 20px;
+            font-size: 14px; font-weight: bold; color: white;
+        }
+        .tag-0 { background: #42a5f5; }
+        .tag-1 { background: #66bb6a; }
+        .tag-2 { background: #ffa726; }
+        .tag-3 { background: #ef5350; }
+        .tag-4 { background: #ab47bc; }
+        
+        .topic-meaning {
+            background: #f8f9ff; border-left: 4px solid #667eea;
+            padding: 15px 20px; margin-bottom: 25px; border-radius: 0 8px 8px 0;
+            font-size: 15px; line-height: 1.8;
+        }
+        .topic-meaning strong { color: #667eea; }
+        
+        /* 词云 */
+        .wc-section {
+            text-align: center; margin-bottom: 25px;
+        }
+        .wc-section img {
+            max-width: 100%; border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        
+        /* 关键词表格 */
+        .keywords-section h3 {
+            font-size: 18px; margin-bottom: 15px;
+            padding-left: 10px; border-left: 3px solid #667eea;
+        }
+        .keywords-table {
+            width: 100%; border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .keywords-table th {
+            background: #667eea; color: white; padding: 10px 15px;
+            text-align: left; font-size: 14px;
+        }
+        .keywords-table td {
+            padding: 10px 15px; border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .keywords-table tr:hover { background: #f8f9ff; }
+        .keywords-table .rank { color: #667eea; font-weight: bold; }
+        .weight-bar {
+            display: inline-block; height: 8px; border-radius: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        /* 导航到其他主题 */
+        .topic-nav {
+            display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;
+        }
+        .topic-nav a {
+            display: inline-block; padding: 8px 16px;
+            background: white; border: 2px solid #e0e0e0;
+            border-radius: 8px; text-decoration: none; color: #555;
+            font-size: 13px; transition: all 0.2s;
+        }
+        .topic-nav a:hover { border-color: #667eea; color: #667eea; }
+        .topic-nav a.active {
+            background: #667eea; color: white; border-color: #667eea;
+        }
+        
+        .footer {
+            text-align: center; padding: 20px; color: #aaa; font-size: 13px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ topic.name }} 详情</h1>
+        <p>{{ topic.label }} | LDA主题挖掘</p>
+    </div>
+    
+    <div class="container">
+        <a class="back-link" href="/">&larr; 返回首页</a>
+        
+        <div class="topic-info">
+            <div class="topic-title">
+                <h2>{{ topic.name }}</h2>
+                <span class="topic-tag tag-{{ topic.id }}">{{ topic.label }}</span>
+            </div>
+            
+            <div class="topic-meaning">
+                <strong>主题含义：</strong>
+                该主题主要围绕「<strong>{{ topic.label }}</strong>」展开，
+                核心关键词反映了用户在外卖评论中对此方面的关注程度。
+                通过LDA模型从 {{ topics|length }} 个主题中提取，该主题的关键词权重
+                可以帮助我们理解用户在该维度上的评价倾向。
+            </div>
+            
+            {% if topic.wordcloud %}
+            <div class="wc-section">
+                <img src="data:image/png;base64,{{ topic.wordcloud }}" alt="{{ topic.name }} 词云">
+            </div>
+            {% endif %}
+            
+            <div class="keywords-section">
+                <h3>Top 15 关键词及权重</h3>
+                <table class="keywords-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>关键词</th>
+                            <th>权重</th>
+                            <th>权重分布</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for word, weight in topic.keywords %}
+                        <tr>
+                            <td class="rank">{{ loop.index }}</td>
+                            <td>{{ word }}</td>
+                            <td>{{ weight }}</td>
+                            <td>
+                                {% set max_weight = topic.keywords[0][1] %}
+                                {% set bar_width = (weight / max_weight * 150)|int %}
+                                <span class="weight-bar" style="width: {{ bar_width }}px;"></span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <h3 style="margin-bottom: 10px; font-size: 16px;">切换主题：</h3>
+        <div class="topic-nav">
+            {% for t in topics %}
+            <a href="/topic/{{ t.id }}" class="{{ 'active' if t.id == topic.id else '' }}">
+                {{ t.name }} - {{ t.label }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="footer">
+        学号: 23053080649 | 外卖评论情感分析 Flask Web应用
+    </div>
+</body>
+</html>
